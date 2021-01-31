@@ -43,10 +43,13 @@
 			<artifactId>jena-arq</artifactId>
 			<version>3.12.0</version>
 		</dependency>
-		<!--<dependency>-->
-			<!--<groupId>net.sourceforge.owlapi</groupId>-->
-			<!--<artifactId>owlapi-distribution</artifactId>-->
-		<!--</dependency>-->
+
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.5</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 	
 	<repositories>

@@ -19,15 +19,16 @@
  */
 package org.aksw.owl2nl;
 
-import java.util.List;
-
+import com.google.gson.Gson;
+import org.aksw.owl2nl.Models.Axiom;
+import org.aksw.owl2nl.Models.GetOntologyResponse;
 import org.aksw.owl2nl.exception.OWLAxiomConversionException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.dlsyntax.renderer.DLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.io.ToStringRenderer;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import simplenlg.features.Feature;
 import simplenlg.framework.NLGElement;
 import simplenlg.framework.NLGFactory;
@@ -35,15 +36,18 @@ import simplenlg.lexicon.Lexicon;
 import simplenlg.phrasespec.SPhraseSpec;
 import simplenlg.realiser.english.Realiser;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
-//import uk.ac.manchester.cs.owlapi.dlsyntax.DLSyntaxObjectRenderer;
-import org.semanticweb.owlapi.dlsyntax.renderer.DLSyntaxObjectRenderer;
+
+import java.util.List;
+
+
 /**
  * Converts OWL axioms into natural language.
- * @author Lorenz Buehmann
  *
+ * @author Lorenz Buehmann
+ * Modified By: KG2NL_WS20 team
  */
-public class OWLAxiomConverter implements OWLAxiomVisitor{
-	
+public class OWLAxiomConverter implements OWLAxiomVisitor {
+
 	private static final Logger logger = LoggerFactory.getLogger(OWLAxiomConverter.class);
 	
 	private NLGFactory nlgFactory;
@@ -341,18 +345,29 @@ public class OWLAxiomConverter implements OWLAxiomVisitor{
 	@Override
 	public void visit(OWLDeclarationAxiom axiom) {
 	}
-	
+
 	public static void main(String[] args) throws Exception {
+
+	}
+
+	public String GetOntology(String path) throws Exception {
 		ToStringRenderer.getInstance().setRenderer(new DLSyntaxObjectRenderer());
-		String ontologyURL = "http://www.cs.man.ac.uk/~stevensr/ontology/family.rdf.owl";// subproperties of the form 'isSomething'
+		//String ontologyURL = "http://www.cs.man.ac.uk/~stevensr/ontology/family.rdf.owl";// subproperties of the form 'isSomething'
 		//ontologyURL = "https://protege.stanford.edu/ontologies/pizza/pizza.owl"; // subproperties of the form 'hasSomething'
 
 		OWLOntologyManager man = OWLManager.createOWLOntologyManager();
-		OWLOntology ontology = man.loadOntology(IRI.create(ontologyURL));
-		
+		OWLOntology ontology = man.loadOntology(IRI.create(path));
+		GetOntologyResponse resp = new GetOntologyResponse();
+		Axiom axiom;
 		OWLAxiomConverter converter = new OWLAxiomConverter();
-		for (OWLAxiom axiom : ontology.getAxioms()) {
-			converter.convert(axiom);
+		for (OWLAxiom a : ontology.getAxioms()) {
+			axiom = new Axiom();
+			String text = converter.convert(a);
+			axiom.setExpression(a.toString());
+			axiom.setText(text);
 		}
+		Gson gson = new Gson();
+		String response = gson.toJson(resp);
+		return response;
 	}
 }
