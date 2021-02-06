@@ -24,8 +24,6 @@ import org.aksw.owl2nl.Models.Axiom;
 import org.aksw.owl2nl.Models.GetOntologyResponse;
 import org.aksw.owl2nl.exception.OWLAxiomConversionException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.dlsyntax.renderer.DLSyntaxObjectRenderer;
-import org.semanticweb.owlapi.io.ToStringRenderer;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -351,7 +349,7 @@ public class OWLAxiomConverter implements OWLAxiomVisitor {
 	}
 
 	public String GetOntology(String path) throws Exception {
-		ToStringRenderer.getInstance().setRenderer(new DLSyntaxObjectRenderer());
+		//ToStringRenderer.getInstance().setRenderer(new DLSyntaxObjectRenderer());
 		//String ontologyURL = "http://www.cs.man.ac.uk/~stevensr/ontology/family.rdf.owl";// subproperties of the form 'isSomething'
 		//ontologyURL = "https://protege.stanford.edu/ontologies/pizza/pizza.owl"; // subproperties of the form 'hasSomething'
 

@@ -13,8 +13,9 @@
 		<module>Triple2NL</module>
 		<module>owl2nl</module>
 		<module>evaluation</module>
-        <module>controller</module>
-    </modules>
+		<module>controller</module>
+		<module>owlapi</module>
+	</modules>
 
 	<developers>
 		<developer>
@@ -56,6 +57,13 @@
 				<role>developer</role>
 			</roles>
 			<organizationUrl>http://aksw.org</organizationUrl>
+		</developer>
+		<developer>
+			<name>Ambuj Kumar Mondal</name>
+			<email>ambuj.mondal@gmail.com</email>
+			<roles>
+				<role>student Developer</role>
+			</roles>
 		</developer>
 	</developers>
 
