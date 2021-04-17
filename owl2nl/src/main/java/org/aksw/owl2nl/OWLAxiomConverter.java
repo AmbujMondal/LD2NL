@@ -24,6 +24,8 @@ import org.aksw.owl2nl.Models.Axiom;
 import org.aksw.owl2nl.Models.GetOntologyResponse;
 import org.aksw.owl2nl.exception.OWLAxiomConversionException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.dlsyntax.renderer.DLSyntaxObjectRenderer;
+import org.semanticweb.owlapi.io.ToStringRenderer;
 import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -345,7 +347,18 @@ public class OWLAxiomConverter implements OWLAxiomVisitor {
 	}
 
 	public static void main(String[] args) throws Exception {
+		ToStringRenderer.getInstance().setRenderer(new DLSyntaxObjectRenderer());
+		String ontologyURL = "http://130.88.198.11/2008/iswc-modtut/materials/koala.owl";
+		ontologyURL = "http://rpc295.cs.man.ac.uk:8080/repository/download?ontology=http://reliant.teknowledge.com/DAML/Transportation.owl&format=RDF/XML";
+		ontologyURL = "http://protege.cim3.net/file/pub/ontologies/travel/travel.owl";
+		//ontologyURL = "https://raw.githubusercontent.com/pezra/pretty-printer/master/Jenna-2.6.3/testing/ontology/bugs/koala.owl";
+		OWLOntologyManager man = OWLManager.createOWLOntologyManager();
+		OWLOntology ontology = man.loadOntology(IRI.create(ontologyURL));
 
+		OWLAxiomConverter converter = new OWLAxiomConverter();
+		for (OWLAxiom axiom : ontology.getAxioms()) {
+			converter.convert(axiom);
+		}
 	}
 
 	public String GetOntology(String path) throws Exception {
@@ -369,3 +382,4 @@ public class OWLAxiomConverter implements OWLAxiomVisitor {
 		return response;
 	}
 }
+
