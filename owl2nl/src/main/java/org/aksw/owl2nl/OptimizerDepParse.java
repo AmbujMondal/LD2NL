@@ -17,7 +17,7 @@ public class OptimizerDepParse {
         try {
             if (text == null || text == "") return text;
 
-            //text="something that a man that sings rock and that a man that sings jazz or a man that sings karaoke  or a man that sings metal";
+            //text="something that a man that sings rock and that a man that sings rock or a man that sings karaoke  or a man that sings metal";
 
             StanfordCoreNLP stanfordCoreNLP = Pipeline.getPipeline();
             CoreDocument coreDocument = new CoreDocument(text);
@@ -50,6 +50,17 @@ public class OptimizerDepParse {
             List<IndexedWord> verbList = new ArrayList();
             List<Integer> verbIndex = new ArrayList();
 
+            List<IndexedWord> objectList = new ArrayList();
+            List<Integer> objectIndex = new ArrayList();
+
+
+            //object list
+            for (int i = 0; i < nodeList.size(); i++) {
+                if ((nodeList.get(i).tag()).equals("VBZ")) {
+                    objectList.add(nodeList.get(i+1));
+                    objectIndex.add(i);
+                }
+            }
 
             /*loading list*/
             for (int i = 0; i < nodeList.size(); i++) {
@@ -73,6 +84,8 @@ public class OptimizerDepParse {
             boolean subjectsChecker=false;
             boolean verbsChecker=false;
             boolean aggregated=false;
+            //boolean objectsame=checkAllObjectsSame(objectList);
+            //System.out.println("today hello"+objectsame);
             String finalText="";
             List<IndexedWord> finalTextList=new ArrayList<>();
             if(combinedCcCommaList.size()>=1) {
@@ -129,6 +142,16 @@ public class OptimizerDepParse {
             }
 
 
+        }
+        return true;
+    }
+
+    public static boolean checkAllObjectsSame(List<IndexedWord> objects){
+        for(int j=1;j<objects.size();j++){
+            if(!((objects.get(0).value()).equals(objects.get(j).value()))){
+                //not same objects
+                return false;
+            }
         }
         return true;
     }
