@@ -1,5 +1,6 @@
 package org.aksw.owl2nl;
 
+import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
@@ -18,7 +19,7 @@ public class OptimizerDepParse {
             if (text == null || text == "") return text;
 
             //text="something that a man that sings rock and that a man that sings rock or a man that sings karaoke  or a man that sings metal";
-            //text="something that a man that knows angular and that a woman that knows angular";
+            text="something that a man that knows angular and that a woman that knows angular";
             StanfordCoreNLP stanfordCoreNLP = Pipeline.getPipeline();
             CoreDocument coreDocument = new CoreDocument(text);
             SemanticGraphFormatter sgf = new SemanticGraphFormatter(1, 1, false, false, false, false, false);
@@ -55,10 +56,28 @@ public class OptimizerDepParse {
 
 
             //object list
+            int objectcounter=0;
             for (int i = 0; i < nodeList.size(); i++) {
+                String object="";
                 if ((nodeList.get(i).tag()).equals("VBZ")) {
-                    objectList.add(nodeList.get(i+1));
-                    objectIndex.add(i);
+                    objectcounter = i+1;
+                    for(int j=i+1; j<nodeList.size(); j++){
+                        if ((nodeList.get(j).tag()).equals("CC") || (nodeList.get(j).tag()).equals(".")){
+                            i++;
+                            break;
+                        }
+                        else{
+                            object=object+nodeList.get(j)+" ";
+                            i++;
+                        }
+                    };
+                }
+                if(object=="" || object=="."){
+
+                }
+                else{
+                    objectList.add(new IndexedWord(CoreLabel.wordFromString(object)));
+                    objectIndex.add(objectcounter);
                 }
             }
 
