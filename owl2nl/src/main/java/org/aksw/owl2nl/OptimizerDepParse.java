@@ -18,7 +18,7 @@ public class OptimizerDepParse {
             if (text == null || text == "") return text;
 
             //text="something that a man that sings rock and that a man that sings rock or a man that sings karaoke  or a man that sings metal";
-
+            //text="something that a man that knows angular and that a woman that knows angular";
             StanfordCoreNLP stanfordCoreNLP = Pipeline.getPipeline();
             CoreDocument coreDocument = new CoreDocument(text);
             SemanticGraphFormatter sgf = new SemanticGraphFormatter(1, 1, false, false, false, false, false);
@@ -83,7 +83,10 @@ public class OptimizerDepParse {
             }
             boolean subjectsChecker=false;
             boolean verbsChecker=false;
+            boolean objectChecker=false;
             boolean aggregated=false;
+            //System.out.println("Objects");
+            //System.out.println(objectList);
             //boolean objectsame=checkAllObjectsSame(objectList);
             //System.out.println("today hello"+objectsame);
             String finalText="";
@@ -91,6 +94,7 @@ public class OptimizerDepParse {
             if(combinedCcCommaList.size()>=1) {
                 subjectsChecker = checkAllSubjectsSame(nodeList, verbIndex, combinedCcCommaIndex);
                 verbsChecker = checkAllVerbsSame(verbList);
+                objectChecker=checkAllObjectsSame(objectList);
             }
             if(combinedCcCommaList.size()>=1 && verbList.size()==combinedCcCommaList.size()+1) {
 
@@ -99,6 +103,13 @@ public class OptimizerDepParse {
                     aggregated = true;
                     if (verbsChecker) {
                         finalTextList = aggregateByVerbs(nodeList, verbIndex, combinedCcCommaIndex);
+                    }
+                }
+                else{
+                    //for different subject same verbs and same objects
+                    if(verbsChecker && objectChecker){
+                        finalTextList=aggregateByObjects(nodeList,verbIndex,combinedCcCommaIndex);
+                        aggregated=true;
                     }
                 }
             }
@@ -256,6 +267,31 @@ public class OptimizerDepParse {
                 }
             }
 
+        }
+
+        return aggregatedList;
+    }
+
+    //object aggregation: different subject+same verbs+same object
+    public static List<IndexedWord> aggregateByObjects(List<IndexedWord> nodeList, List<Integer> verbIndex, List<Integer> combinedCcCommaIndex) {
+        List<IndexedWord> aggregatedList=new ArrayList();
+        // removing verbs and object from the while list
+        for(int i=0;i<verbIndex.size();i++){
+            if(i==0){
+                for(int j=0;j<verbIndex.get(i);j++){
+                    aggregatedList.add(nodeList.get(j));
+                }
+            }
+            else if(i==verbIndex.size()-1){
+                for (int j=combinedCcCommaIndex.get(i-1);j<nodeList.size();j++){
+                    aggregatedList.add(nodeList.get(j));
+                }
+            }
+            else{
+                for(int j=combinedCcCommaIndex.get(i-1); j<verbIndex.get(i); j++){
+                    aggregatedList.add(nodeList.get(j));
+                }
+            }
         }
 
         return aggregatedList;
