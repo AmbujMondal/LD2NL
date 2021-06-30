@@ -14,18 +14,26 @@ public class OptimizerDepParseTest {
 
     private static OWLClass company;
     private static OWLClass man;
+    private static OWLClass boy;
+    private static OWLClass girl;
     private static OWLClass softwareCompany;
     private static OWLClass woman;
     private static OWLClass student;
+    private static OWLClass teacher;
     private static OWLClass employee;
+
     private static OWLNamedIndividual HTML;
     private static OWLNamedIndividual CSS;
     private static OWLNamedIndividual ANGULAR;
     private static OWLNamedIndividual German;
     private static OWLNamedIndividual French;
     private static OWLNamedIndividual English;
+
     private static OWLObjectProperty speaks;
     private static OWLObjectProperty knows;
+    private static OWLObjectProperty teaches;
+    private static OWLObjectProperty wears;
+
 
 
 
@@ -39,6 +47,12 @@ public class OptimizerDepParseTest {
     private static OWLNamedIndividual golf;
     private static OWLNamedIndividual hiphop;
     private static OWLNamedIndividual rock;
+    private static OWLNamedIndividual top;
+    private static OWLNamedIndividual skirt;
+    private static OWLNamedIndividual shirt;
+    private static OWLNamedIndividual jeans;
+
+
 
     private static OWLObjectProperty worksFor;
     private static OWLObjectProperty ledBy;
@@ -49,8 +63,11 @@ public class OptimizerDepParseTest {
     private static OWLObjectProperty birthPlace;
     private static OWLLiteral salary;
     private static OWLDataProperty nrOfInhabitants;
+    private static OWLDataProperty nrOfSons;
+    private static OWLDataProperty nrOfDaughters;
     private static OWLDataRange dataRange;
-
+    private static OWLLiteral sons;
+    private static OWLLiteral daughters;
     OWLClassExpression ce;
 
     String text;
@@ -83,10 +100,14 @@ public class OptimizerDepParseTest {
         company = df.getOWLClass("Company", pm);
         student = df.getOWLClass("student", pm);
         woman = df.getOWLClass("woman", pm);
-        man = df.getOWLClass("Man", pm);
-
+        man = df.getOWLClass("man", pm);
+        boy = df.getOWLClass("boy", pm);
+        girl = df.getOWLClass("girl", pm);
+        teacher = df.getOWLClass("teacher", pm);
 
         workPlace = df.getOWLObjectProperty("workPlace", pm);
+        teaches = df.getOWLObjectProperty("teaches", pm);
+        wears= df.getOWLObjectProperty("wears", pm);
         paderborn = df.getOWLNamedIndividual("Paderborn", pm);
         karaoke = df.getOWLNamedIndividual("karaoke", pm);
         Jazz = df.getOWLNamedIndividual("jazz", pm);
@@ -103,11 +124,19 @@ public class OptimizerDepParseTest {
         German = df.getOWLNamedIndividual("German", pm);
         French = df.getOWLNamedIndividual("French", pm);
         English = df.getOWLNamedIndividual("English", pm);
+        top = df.getOWLNamedIndividual("top", pm);
+        skirt= df.getOWLNamedIndividual("skirt", pm);
+        shirt = df.getOWLNamedIndividual("shirt", pm);
+        jeans = df.getOWLNamedIndividual("jeans", pm);
+
 
 
         nrOfInhabitants = df.getOWLDataProperty("nrOfInhabitants", pm);
+        nrOfSons= df.getOWLDataProperty("nrOfSons",pm);
+        nrOfDaughters= df.getOWLDataProperty("nrOfDaughters",pm);
         dataRange = df.getOWLDatatypeMinInclusiveRestriction(10000000);
-
+        sons = df.getOWLLiteral(3);
+        daughters = df.getOWLLiteral(2);
         ToStringRenderer.getInstance().setRenderer(new DLSyntaxObjectRenderer());
     }
 
@@ -143,8 +172,25 @@ public class OptimizerDepParseTest {
         text = converter.convert(ce);
         System.out.println(ce + "=" + text);
 
-//        ce = df.getOWLObjectUnionOf((df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(knows, HTML), woman), df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(knows, CSS), woman)) ), (df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(knows, HTML), man), df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(knows, CSS), man)) ));
-//        text = converter.convert(ce);
-//        System.out.println(ce + "=" + text);
+        ce = df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLDataHasValue(nrOfSons, sons), man),(df.getOWLObjectIntersectionOf(df.getOWLDataHasValue(nrOfDaughters, daughters), man) ));
+        text = converter.convert(ce);
+        System.out.println(ce + "=" + text);
+
+        ce = df.getOWLObjectIntersectionOf((df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(knows, HTML), woman), df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(knows, CSS), woman)) ), (df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(knows, HTML), man), df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(knows, CSS), man)) ));
+        text = converter.convert(ce);
+        System.out.println(ce + "=" + text);
+
+        ce = df.getOWLObjectIntersectionOf((df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(wears, top), girl), df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(wears, skirt), girl)) ), (df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(wears, shirt), boy), df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(wears, jeans), boy)) ));
+        text = converter.convert(ce);
+        System.out.println(ce + "=" + text);
+
+        ce = df.getOWLObjectUnionOf((df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(wears, top), girl), df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(wears, skirt), girl)) ), (df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(wears, shirt), boy), df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(wears, jeans), boy)) ));
+        text = converter.convert(ce);
+        System.out.println(ce + "=" + text);
+
+        ce = df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(teaches, German), teacher),(df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(teaches, French), teacher), df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(teaches, English), teacher)) ));
+        text = converter.convert(ce);
+        System.out.println(ce + "=" + text);
+
     }
 }
