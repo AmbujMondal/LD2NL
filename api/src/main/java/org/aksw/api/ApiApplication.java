@@ -3,15 +3,14 @@ package org.aksw.api;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import org.aksw.owl2nl.OWLAxiomConverter;
+import org.aksw.owl2nl.OWLClassExpressionConverter;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.aksw.owl2nl.OWLAxiomConverter;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -35,6 +34,7 @@ public class ApiApplication {
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/hello").allowedOrigins("*");
 				registry.addMapping("/getOntology").allowedOrigins("*");
+				registry.addMapping("/convert").allowedOrigins("*");
 			}
 		};
 	}
@@ -45,7 +45,7 @@ public class ApiApplication {
 	}
 
 	@GetMapping("/getOntology")
-	public String GetOntology(@RequestParam(value = "path") String path) {
+	public String GetOntology(@RequestParam(value = "path", defaultValue = "http://www.cs.man.ac.uk/~stevensr/ontology/family.rdf.owl") String path) throws Exception {
 		String response;
 		try {
 			if (path == null || path.isEmpty())
@@ -69,8 +69,18 @@ public class ApiApplication {
 			return response;
 		} catch (Exception e) {
 			e.printStackTrace();
-			return String.format("Internal Error. Please try later! \n \n %s", e.getMessage());
+			throw new Exception(String.format("Error! Please try again! \n \n %s", e.getMessage()));
+			// return String.format("Internal Error. Please try later! \n \n %s", e.getMessage());
 		}
+	}
+
+	@PostMapping("/convert")
+	public Translate ConvertCEtoNL(@RequestBody Translate model) {
+		Translate resp = new Translate(model.GetUrl(), model.GetCE());
+		OWLClassExpressionConverter converter = new OWLClassExpressionConverter();
+
+
+		return resp;
 	}
 }
 

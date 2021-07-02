@@ -111,7 +111,9 @@ public class OWLClassExpressionConverter implements OWLClassExpressionVisitorEx<
 	PropertyVerbalizer propertyVerbalizer = new PropertyVerbalizer(iriConverter, null);
 	LiteralConverter literalConverter = new LiteralConverter(iriConverter);
 	OWLDataFactory df = new OWLDataFactoryImpl();
-	
+
+	private static OptimizerDepParse optimiser;
+
 	boolean noun;
 	
 	NLGElement object;
@@ -128,6 +130,9 @@ public class OWLClassExpressionConverter implements OWLClassExpressionVisitorEx<
 	public OWLClassExpressionConverter(Lexicon lexicon) {
 		nlgFactory = new NLGFactory(lexicon);
 		realiser = new Realiser(lexicon);
+		if (optimiser == null) {
+			optimiser = new OptimizerDepParse();
+		}
 	}
 	
 	public OWLClassExpressionConverter() {
@@ -140,10 +145,16 @@ public class OWLClassExpressionConverter implements OWLClassExpressionVisitorEx<
 
 		// realise
 		nlgElement = realiser.realise(nlgElement);
-		
+		long start = System.currentTimeMillis();
 		String out = nlgElement.getRealisation();
-		OptimizerDepParse opt = new OptimizerDepParse();
-		out = opt.optimize(out);
+		long end = System.currentTimeMillis();
+		System.out.println("**************************************************");
+		System.out.println("Time consumed in axiom text generation : " + (end - start) / 1000F + " sec");
+		start = System.currentTimeMillis();
+		out = optimiser.optimize(out);
+		end = System.currentTimeMillis();
+		System.out.println("Time consumed by dependency parser(Optimiser) : " + (end - start) / 1000F + " sec");
+
 		return out;
 	}
 	
