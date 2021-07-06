@@ -225,4 +225,14 @@ public class OptimizerDepParseTest {
         Assert.assertEquals("something that a man that knows CSS and that a man that knows HTML or something" +
                 " that a woman that knows CSS and that a woman that knows HTML", text);
     }
+
+//    @Test
+//    public void testcombination() {
+//        ce = df.getOWLObjectUnionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(worksFor, upb),
+//                df.getOWLObjectHasValue(plays, cricket) , man),
+//                df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(worksFor, upb), woman));
+//        text = converter.convert(ce);
+//        Assert.assertEquals("(Man ⊓ (∃ worksFor.{UPB})) ⊔ (Woman ⊓ (∃ worksFor.{UPB}))", ce.toString());
+//        Assert.assertEquals("a man that or a woman that works for UPB", text);
+//    }
 }
