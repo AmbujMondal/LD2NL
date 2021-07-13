@@ -475,8 +475,11 @@ public class OWLAxiomConverter implements OWLAxiomVisitor {
 			Map<String, String> axioms = new HashMap<>();
 			// convert all the axioms
 			for (OWLAxiom axiom : ontology.getAxioms()) {
+				Set<OWLAxiom> x = ontology.getAxiomsIgnoreAnnotations(axiom);
 				String text = convert(axiom);
-				axioms.put(axiom.toString(), text);
+
+				if (text != null)
+					axioms.put(axiom.toString(), text);
 			}
 			// pass all the converted axioms
 			return axioms;

@@ -90,13 +90,18 @@ public class OWLClassExpressionConverter implements OWLClassExpressionVisitorEx<
 	public String convert(OWLClassExpression ce) {
 		// process
 		NLGElement nlgElement = asNLGElement(ce);
-
+		long start = System.currentTimeMillis();
 		// realise
 		nlgElement = realiser.realise(nlgElement);
-		
-		String out = nlgElement.getRealisation();
 
+		String out = nlgElement.getRealisation();
+		long end = System.currentTimeMillis();
+		System.out.println("**************************************************");
+		System.out.println("Time consumed in axiom text generation : " + (end - start) / 1000F + " sec");
+		start = System.currentTimeMillis();
 		out = opt.optimize(out);
+		end = System.currentTimeMillis();
+		System.out.println("Time consumed by dependency parser(Optimiser) : " + (end - start) / 1000F + " sec");
 		return out;
 	}
 	
