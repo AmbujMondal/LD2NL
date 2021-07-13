@@ -212,13 +212,22 @@ public class OptimizerDepParseTest {
     }
 
     @Test
+    public void testDisjunctionDSDVSO() {
+        ce = df.getOWLObjectUnionOf(df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(worksFor, upb), man),
+                df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(worksFor, upb), woman));
+        text = converter.convert(ce);
+        Assert.assertEquals("(Man ⊓ (∃ worksFor.{UPB})) ⊔ (Woman ⊓ (∃ worksFor.{UPB}))", ce.toString());
+        Assert.assertEquals("a man that or a woman that works for UPB", text);
+    }
+
+    @Test
     public void testCombinationMultipleDSSVDO() {
         ce = df.getOWLObjectUnionOf((df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(
                 df.getOWLObjectHasValue(know, HTML), woman),
                 df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(know, CSS), woman))),
                 (df.getOWLObjectIntersectionOf(df.getOWLObjectIntersectionOf(
                         df.getOWLObjectHasValue(know, HTML), man),
-                df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(know, CSS), man)) ));
+                        df.getOWLObjectIntersectionOf(df.getOWLObjectHasValue(know, CSS), man))));
         text = converter.convert(ce);
         Assert.assertEquals("((Man ⊓ (∃ know.{CSS})) ⊓ (Man ⊓ (∃ know.{HTML})))" +
                 " ⊔ ((Woman ⊓ (∃ know.{CSS})) ⊓ (Woman ⊓ (∃ know.{HTML})))", ce.toString());
