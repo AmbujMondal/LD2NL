@@ -19,122 +19,96 @@
  */
 package org.aksw.owl2nl;
 
-import java.util.List;
-
 import org.aksw.owl2nl.exception.OWLAxiomConversionException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.dlsyntax.renderer.DLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.io.ToStringRenderer;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom;
-import org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLAxiomVisitor;
-import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
-import org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom;
-import org.semanticweb.owlapi.model.OWLDatatypeDefinitionAxiom;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointUnionAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLFunctionalDataPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLFunctionalObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLHasKeyAxiom;
-import org.semanticweb.owlapi.model.OWLInverseFunctionalObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLInverseObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLIrreflexiveObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLNegativeDataPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLNegativeObjectPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
-import org.semanticweb.owlapi.model.OWLObjectPropertyRangeAxiom;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLReflexiveObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLSameIndividualAxiom;
-import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
-import org.semanticweb.owlapi.model.OWLSymmetricObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.SWRLRule;
+import org.semanticweb.owlapi.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import simplenlg.features.Feature;
+import simplenlg.framework.CoordinatedPhraseElement;
 import simplenlg.framework.NLGElement;
 import simplenlg.framework.NLGFactory;
 import simplenlg.lexicon.Lexicon;
 import simplenlg.phrasespec.SPhraseSpec;
 import simplenlg.realiser.english.Realiser;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
-//import uk.ac.manchester.cs.owlapi.dlsyntax.DLSyntaxObjectRenderer;
-import org.semanticweb.owlapi.dlsyntax.renderer.DLSyntaxObjectRenderer;
+
+import java.util.*;
+
 /**
  * Converts OWL axioms into natural language.
- * @author Lorenz Buehmann
  *
+ * @author Lorenz Buehmann
+ * Features added by : KG2NL_WS20 team
  */
-public class OWLAxiomConverter implements OWLAxiomVisitor{
-	
-	private static final Logger logger = LoggerFactory.getLogger(OWLAxiomConverter.class);
-	
-	private NLGFactory nlgFactory;
-	private Realiser realiser;
+public class OWLAxiomConverter implements OWLAxiomVisitor {
 
-	private OWLClassExpressionConverter ceConverter;
-	
-	private OWLDataFactory df = new OWLDataFactoryImpl();
-	
+	private static final Logger logger = LoggerFactory.getLogger(OWLAxiomConverter.class);
+
+	private final NLGFactory nlgFactory;
+	private final Realiser realiser;
+
+	private final OWLClassExpressionConverter ceConverter;
+	private final OWLPropertyExpressionConverter peConverter;
+
+	private final OWLDataFactory df = new OWLDataFactoryImpl();
+
 	private String nl;
-	
+	private static OptimizerDepParse optimiser;
+
+	private static OWLOntologyManager owlOntologyManager;
+
 	public OWLAxiomConverter(Lexicon lexicon) {
 		nlgFactory = new NLGFactory(lexicon);
 		realiser = new Realiser(lexicon);
-		
+
 		ceConverter = new OWLClassExpressionConverter(lexicon);
+		peConverter = new OWLPropertyExpressionConverter(lexicon);
+
+		owlOntologyManager = OWLManager.createOWLOntologyManager();
+		optimiser = new OptimizerDepParse();
 	}
-	
+
 	public OWLAxiomConverter() {
 		this(Lexicon.getDefaultLexicon());
 	}
-	
+
 	/**
-	 * Converts the OWL axiom into natural language. Only logical axioms are 
-	 * supported, i.e. declaration axioms and annotation axioms are not 
+	 * Converts the OWL axiom into natural language. Only logical axioms are
+	 * supported, i.e. declaration axioms and annotation axioms are not
 	 * converted and <code>null</code> will be returned instead.
+	 *
 	 * @param axiom the OWL axiom
 	 * @return the natural language expression
 	 */
 	public String convert(OWLAxiom axiom) throws OWLAxiomConversionException {
 		reset();
-		
+
 		if (axiom.isLogicalAxiom()) {
 			logger.debug("Converting " + axiom.getAxiomType().getName() + " axiom: " + axiom);
 			try {
+				long start = System.currentTimeMillis();
 				axiom.accept(this);
+				long end = System.currentTimeMillis();
+				System.out.println("**************************************************");
+				System.out.println("Time consumed in axiom text generation : " + (end - start) / 1000F + " sec");
+				if (nl != null) {
+					start = System.currentTimeMillis();
+					nl = optimiser.optimize(nl);
+					end = System.currentTimeMillis();
+					System.out.println("Time consumed by dependency parser(Optimiser) : " + (end - start) / 1000F + " sec");
+				}
 				return nl;
 			} catch (Exception e) {
 				throw new OWLAxiomConversionException(axiom, e);
 			}
 		}
-
 		logger.warn("Conversion of non-logical axioms not supported yet!");
 		return null;
 	}
-	
+
 	private void reset() {
 		nl = null;
 	}
@@ -150,27 +124,27 @@ public class OWLAxiomConverter implements OWLAxiomVisitor{
 		NLGElement subClassElement = ceConverter.asNLGElement(subClass, true);
 		logger.debug("SubClass: " + realiser.realise(subClassElement));
 //		((PhraseElement)subClassElement).setPreModifier("every");
-		
+
 		// convert the superclass
 		OWLClassExpression superClass = axiom.getSuperClass();
 		NLGElement superClassElement = ceConverter.asNLGElement(superClass);
 		logger.debug("SuperClass: " + realiser.realise(superClassElement));
-		
+
 		SPhraseSpec clause = nlgFactory.createClause(subClassElement, "be", superClassElement);
 		superClassElement.setFeature(Feature.COMPLEMENTISER, null);
 
 		nl = realiser.realise(clause).toString();
 		logger.debug(axiom + " = " + nl);
 	}
-	
+
 	@Override
 	public void visit(OWLEquivalentClassesAxiom axiom) {
 		List<OWLClassExpression> classExpressions = axiom.getClassExpressionsAsList();
-		
+
 		for (int i = 0; i < classExpressions.size(); i++) {
 			for (int j = i + 1; j < classExpressions.size(); j++) {
 				OWLSubClassOfAxiom subClassAxiom = df.getOWLSubClassOfAxiom(
-						classExpressions.get(i), 
+						classExpressions.get(i),
 						classExpressions.get(j));
 				subClassAxiom.accept(this);
 			}
@@ -178,39 +152,69 @@ public class OWLAxiomConverter implements OWLAxiomVisitor{
 	}
 
 	/*
-	 * We rewrite DisjointClasses(C_1,...,C_n) as SubClassOf(C_i, ObjectComplementOf(C_j)) for each subset {C_i,C_j} with i != j 
+	 * We rewrite DisjointClasses(C_1,...,C_n) as SubClassOf(C_i, ObjectComplementOf(C_j)) for each subset {C_i,C_j} with i != j
 	 */
 	@Override
 	public void visit(OWLDisjointClassesAxiom axiom) {
 		List<OWLClassExpression> classExpressions = axiom.getClassExpressionsAsList();
-		
+
 		for (int i = 0; i < classExpressions.size(); i++) {
 			for (int j = i + 1; j < classExpressions.size(); j++) {
 				OWLSubClassOfAxiom subClassAxiom = df.getOWLSubClassOfAxiom(
-						classExpressions.get(i), 
+						classExpressions.get(i),
 						df.getOWLObjectComplementOf(classExpressions.get(j)));
 				subClassAxiom.accept(this);
 			}
 		}
 	}
-	
+
 	@Override
 	public void visit(OWLDisjointUnionAxiom axiom) {
 	}
 
-	
+
 	//#########################################################
 	//################# object property axioms ################
 	//#########################################################
 
 	@Override
 	public void visit(OWLSubObjectPropertyOfAxiom axiom) {
+		logger.debug("Converting SubObjectPropertyOf axiom {}", axiom);
+		// convert the sub property
+		OWLObjectPropertyExpression subProperty = axiom.getSubProperty();
+		NLGElement subPropertyElement = peConverter.asNLGElement(subProperty);
+		logger.debug("subProperty: " + realiser.realise(subPropertyElement));
+
+		// convert the super property
+		OWLObjectPropertyExpression superProperty = axiom.getSuperProperty();
+		NLGElement superPropertyElement = peConverter.asNLGElement(superProperty);
+		logger.debug("SuperObjectProperty: " + realiser.realise(superPropertyElement));
+
+		SPhraseSpec clause = nlgFactory.createClause(subPropertyElement, "imply", superPropertyElement);
+		superPropertyElement.setFeature(Feature.COMPLEMENTISER, null);
+
+		nl = realiser.realise(clause).toString();
+		logger.debug(axiom + " = " + nl);
 	}
-	
+
 	@Override
 	public void visit(OWLEquivalentObjectPropertiesAxiom axiom) {
+		Set<OWLObjectPropertyExpression> ObjProperty = axiom.getProperties();
+		List<OWLObjectPropertyExpression> ObjProp = new ArrayList<>(ObjProperty);
+		for (int i = 0; i < ObjProp.size(); i++) {
+			for (int j = i + 1; j < ObjProp.size(); j++) {
+				NLGElement EquiObjPropertyElement = peConverter.asNLGElement(ObjProp.get(i), false);
+				logger.debug("Equivalent Property 1: " + realiser.realise(EquiObjPropertyElement));
+
+				NLGElement Equi2ObjPropertyElement = peConverter.asNLGElement(ObjProp.get(j), false);
+				logger.debug("Equivalent Property 2: " + realiser.realise(Equi2ObjPropertyElement));
+				SPhraseSpec clause = nlgFactory.createClause(EquiObjPropertyElement, "be equivalent to", Equi2ObjPropertyElement);
+				nl = realiser.realise(clause).toString();
+				logger.debug(axiom + " = " + nl);
+			}
+		}
 	}
-	
+
 	@Override
 	public void visit(OWLDisjointObjectPropertiesAxiom axiom) {
 	}
@@ -219,21 +223,34 @@ public class OWLAxiomConverter implements OWLAxiomVisitor{
 	public void visit(OWLObjectPropertyDomainAxiom axiom) {
 		axiom.asOWLSubClassOfAxiom().accept(this);
 	}
-	
+
 	@Override
 	public void visit(OWLObjectPropertyRangeAxiom axiom) {
 		axiom.asOWLSubClassOfAxiom().accept(this);
 	}
-	
+
 	@Override
 	public void visit(OWLInverseObjectPropertiesAxiom axiom) {
+		logger.debug("Converting InverseObjectProperties axiom {}", axiom);
+		// get the first property
+		OWLObjectPropertyExpression firstPropertyExpression = axiom.getFirstProperty();
+		//get the second property
+		OWLObjectPropertyExpression secondPropertyExpression = axiom.getSecondProperty();
+		// get inverse of second property
+		OWLObjectPropertyExpression inversePropertyExpression = secondPropertyExpression.getInverseProperty();
+
+		// Express the inverse object properties axiom as the first property
+		// being equivalent to the inverse of the second property.
+		OWLEquivalentObjectPropertiesAxiom eqObjectPropertiesAxiom = df.getOWLEquivalentObjectPropertiesAxiom(
+				firstPropertyExpression, inversePropertyExpression);
+		eqObjectPropertiesAxiom.accept(this);
 	}
 
 	@Override
 	public void visit(OWLFunctionalObjectPropertyAxiom axiom) {
 		axiom.asOWLSubClassOfAxiom().accept(this);
 	}
-	
+
 	@Override
 	public void visit(OWLAsymmetricObjectPropertyAxiom axiom) {
 	}
@@ -242,68 +259,132 @@ public class OWLAxiomConverter implements OWLAxiomVisitor{
 	public void visit(OWLReflexiveObjectPropertyAxiom axiom) {
 		axiom.asOWLSubClassOfAxiom().accept(this);
 	}
-	
+
 	@Override
 	public void visit(OWLSymmetricObjectPropertyAxiom axiom) {
+		logger.debug("Converting SymmetricObjectProperty axiom {}", axiom);
+		// read the property expression
+		OWLObjectPropertyExpression propertyExpression = axiom.getProperty();
+		// get the inverse of the property expression
+		OWLObjectPropertyExpression inversePropertyExpression = propertyExpression.getInverseProperty();
+
+		// Express the symmetric object property axiom as the property
+		// being a sub object property of it's inverse.
+		OWLSubObjectPropertyOfAxiom subObjPropAxiom = df.getOWLSubObjectPropertyOfAxiom(
+				propertyExpression, inversePropertyExpression);
+		subObjPropAxiom.accept(this);
 	}
-	
+
 	@Override
 	public void visit(OWLTransitiveObjectPropertyAxiom axiom) {
+		OWLObjectPropertyExpression propertyExpression = axiom.getProperty();
+
+		//transiviteProperty1=X&Y, transiviteProperty2=Y&Z, transiviteProperty3=X&Z
+		NLGElement transiviteProperty1 = peConverter.asNLGElement(propertyExpression,true);
+		NLGElement transiviteProperty2 = peConverter.asNLGElement(propertyExpression,true);
+		NLGElement transiviteProperty3 = peConverter.asNLGElement(propertyExpression,true);
+
+		CoordinatedPhraseElement Phrase1 = nlgFactory.createCoordinatedPhrase();
+		CoordinatedPhraseElement Phrase2 = nlgFactory.createCoordinatedPhrase();
+
+		Phrase1.addCoordinate(transiviteProperty1);
+		Phrase1.addCoordinate(transiviteProperty2);
+
+		Phrase2.addCoordinate(transiviteProperty3);
+		Phrase2.setConjunction("if");
+		Phrase2.addCoordinate(Phrase1);
+
+		nl = realiser.realise(Phrase2).toString();
+		logger.debug(axiom + " = " + nl);
 	}
 
 	@Override
 	public void visit(OWLIrreflexiveObjectPropertyAxiom axiom) {
 		axiom.asOWLSubClassOfAxiom().accept(this);
 	}
-	
+
 	@Override
 	public void visit(OWLInverseFunctionalObjectPropertyAxiom axiom) {
 		axiom.asOWLSubClassOfAxiom().accept(this);
 	}
-	
+
 	//#########################################################
 	//################# data property axioms ##################
 	//#########################################################
-	
+
 	@Override
 	public void visit(OWLSubDataPropertyOfAxiom axiom) {
+		logger.debug("Converting SubObjectPropertyOf axiom {}", axiom);
+		// convert the sub property
+		OWLDataPropertyExpression subProperty = axiom.getSubProperty();
+		NLGElement subPropertyElement = peConverter.asNLGElement(subProperty);
+		logger.debug("subProperty: " + realiser.realise(subPropertyElement));
+
+		// convert the super property
+		OWLDataPropertyExpression superProperty = axiom.getSuperProperty();
+		NLGElement superPropertyElement = peConverter.asNLGElement(superProperty);
+		logger.debug("SuperObjectProperty: " + realiser.realise(superPropertyElement));
+
+		SPhraseSpec clause = nlgFactory.createClause(subPropertyElement, "imply", superPropertyElement);
+		superPropertyElement.setFeature(Feature.COMPLEMENTISER, null);
+
+		nl = realiser.realise(clause).toString();
+		logger.debug(axiom + " = " + nl);
 	}
-	
+
 	@Override
 	public void visit(OWLEquivalentDataPropertiesAxiom axiom) {
+		Set<OWLDataPropertyExpression> DataProperty = axiom.getProperties();
+		List<OWLDataPropertyExpression> DataProp = new ArrayList<>(DataProperty);
+		for (int i = 0; i < DataProp.size(); i++) {
+			for (int j = i + 1; j < DataProp.size(); j++) {
+				NLGElement EquiDataPropertyElement = peConverter.asNLGElement(DataProp.get(i));
+				logger.debug("Equivalent Property 1: " + realiser.realise(EquiDataPropertyElement));
+
+
+				NLGElement Equi2DataPropertyElement = peConverter.asNLGElement(DataProp.get(j));
+				logger.debug("Equivalent Property 2: " + realiser.realise(Equi2DataPropertyElement));
+				SPhraseSpec clause = nlgFactory.createClause(EquiDataPropertyElement, "be equivalent to", Equi2DataPropertyElement);
+				nl = realiser.realise(clause).toString();
+				logger.debug(axiom + " = " + nl);
+
+			}
+
+
+		}
 	}
-	
+
 	@Override
 	public void visit(OWLDisjointDataPropertiesAxiom axiom) {
 	}
-	
+
 	@Override
 	public void visit(OWLDataPropertyDomainAxiom axiom) {
 		axiom.asOWLSubClassOfAxiom().accept(this);
 	}
-	
+
 	@Override
 	public void visit(OWLDataPropertyRangeAxiom axiom) {
 		axiom.asOWLSubClassOfAxiom().accept(this);
 	}
-	
+
 	@Override
 	public void visit(OWLFunctionalDataPropertyAxiom axiom) {
 		axiom.asOWLSubClassOfAxiom().accept(this);
 	}
-	
+
 	//#########################################################
 	//################# individual axioms #####################
 	//#########################################################
-	
+
 	@Override
 	public void visit(OWLClassAssertionAxiom axiom) {
 	}
-	
+
 	@Override
 	public void visit(OWLObjectPropertyAssertionAxiom axiom) {
 	}
-	
+
 	@Override
 	public void visit(OWLDataPropertyAssertionAxiom axiom) {
 	}
@@ -331,7 +412,7 @@ public class OWLAxiomConverter implements OWLAxiomVisitor{
 	@Override
 	public void visit(OWLSubPropertyChainOfAxiom axiom) {
 	}
-	
+
 	@Override
 	public void visit(OWLHasKeyAxiom axiom) {
 	}
@@ -343,11 +424,11 @@ public class OWLAxiomConverter implements OWLAxiomVisitor{
 	@Override
 	public void visit(SWRLRule axiom) {
 	}
-	
+
 	//#########################################################
 	//################# non-logical axioms ####################
 	//#########################################################
-	
+
 	@Override
 	public void visit(OWLAnnotationAssertionAxiom axiom) {
 	}
@@ -367,20 +448,44 @@ public class OWLAxiomConverter implements OWLAxiomVisitor{
 	@Override
 	public void visit(OWLDeclarationAxiom axiom) {
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		ToStringRenderer.getInstance().setRenderer(new DLSyntaxObjectRenderer());
-		String ontologyURL = "http://130.88.198.11/2008/iswc-modtut/materials/koala.owl";
-		ontologyURL = "http://rpc295.cs.man.ac.uk:8080/repository/download?ontology=http://reliant.teknowledge.com/DAML/Transportation.owl&format=RDF/XML";
-		ontologyURL = "http://protege.cim3.net/file/pub/ontologies/travel/travel.owl";
-		//ontologyURL = "https://raw.githubusercontent.com/pezra/pretty-printer/master/Jenna-2.6.3/testing/ontology/bugs/koala.owl";
-		OWLOntologyManager man = OWLManager.createOWLOntologyManager();
-		OWLOntology ontology = man.loadOntology(IRI.create(ontologyURL));
-		
+		String ontologyURL = "http://www.cs.man.ac.uk/~stevensr/ontology/family.rdf.owl";// subproperties of the form 'isSomething'
+		//ontologyURL = "https://protege.stanford.edu/ontologies/pizza/pizza.owl"; // subproperties of the form 'hasSomething'
+
 		OWLAxiomConverter converter = new OWLAxiomConverter();
+		OWLOntology ontology = owlOntologyManager.loadOntology(IRI.create(ontologyURL));
+
 		for (OWLAxiom axiom : ontology.getAxioms()) {
 			converter.convert(axiom);
 		}
 	}
 
+	public String Test() throws Exception {
+		System.out.println("test function called");
+		return "Hurray !";
+	}
+
+	public Map<String, String> readOntology(String path) throws Exception {
+		try {
+			// read the ontology from the path
+			OWLOntology ontology = owlOntologyManager.loadOntology(IRI.create(path));
+
+			Map<String, String> axioms = new HashMap<>();
+			// convert all the axioms
+			for (OWLAxiom axiom : ontology.getAxioms()) {
+				Set<OWLAxiom> x = ontology.getAxiomsIgnoreAnnotations(axiom);
+				String text = convert(axiom);
+
+				if (text != null)
+					axioms.put(axiom.toString(), text);
+			}
+			// pass all the converted axioms
+			return axioms;
+		} catch (Exception ex) {
+			System.out.println("error in readOntology:" + ex.getMessage());
+			throw ex;
+		}
+	}
 }

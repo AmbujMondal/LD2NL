@@ -22,71 +22,21 @@
  */
 package org.aksw.owl2nl;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
+import com.google.common.collect.Sets;
 import org.aksw.triple2nl.converter.IRIConverter;
 import org.aksw.triple2nl.converter.LiteralConverter;
 import org.aksw.triple2nl.converter.SimpleIRIConverter;
 import org.aksw.triple2nl.nlp.stemming.PlingStemmer;
 import org.aksw.triple2nl.property.PropertyVerbalization;
 import org.aksw.triple2nl.property.PropertyVerbalizer;
-import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLClassExpressionVisitorEx;
-import org.semanticweb.owlapi.model.OWLDataAllValuesFrom;
-import org.semanticweb.owlapi.model.OWLDataCardinalityRestriction;
-import org.semanticweb.owlapi.model.OWLDataComplementOf;
-import org.semanticweb.owlapi.model.OWLDataExactCardinality;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDataHasValue;
-import org.semanticweb.owlapi.model.OWLDataIntersectionOf;
-import org.semanticweb.owlapi.model.OWLDataMaxCardinality;
-import org.semanticweb.owlapi.model.OWLDataMinCardinality;
-import org.semanticweb.owlapi.model.OWLDataOneOf;
-import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
-import org.semanticweb.owlapi.model.OWLDataRange;
-import org.semanticweb.owlapi.model.OWLDataRangeVisitorEx;
-import org.semanticweb.owlapi.model.OWLDataSomeValuesFrom;
-import org.semanticweb.owlapi.model.OWLDataUnionOf;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLDatatypeRestriction;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLFacetRestriction;
-import org.semanticweb.owlapi.model.OWLIndividual;
-import org.semanticweb.owlapi.model.OWLIndividualVisitorEx;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLNaryBooleanClassExpression;
-import org.semanticweb.owlapi.model.OWLObjectAllValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectCardinalityRestriction;
-import org.semanticweb.owlapi.model.OWLObjectComplementOf;
-import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
-import org.semanticweb.owlapi.model.OWLObjectHasSelf;
-import org.semanticweb.owlapi.model.OWLObjectHasValue;
-import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
-import org.semanticweb.owlapi.model.OWLObjectMaxCardinality;
-import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
-import org.semanticweb.owlapi.model.OWLObjectOneOf;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectUnionOf;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.semanticweb.owlapi.vocab.OWLFacet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import simplenlg.features.Feature;
 import simplenlg.features.InternalFeature;
-import simplenlg.framework.CoordinatedPhraseElement;
-import simplenlg.framework.LexicalCategory;
-import simplenlg.framework.NLGElement;
-import simplenlg.framework.NLGFactory;
-import simplenlg.framework.PhraseCategory;
+import simplenlg.framework.*;
 import simplenlg.lexicon.Lexicon;
 import simplenlg.phrasespec.NPPhraseSpec;
 import simplenlg.phrasespec.SPhraseSpec;
@@ -94,31 +44,33 @@ import simplenlg.phrasespec.VPPhraseSpec;
 import simplenlg.realiser.english.Realiser;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
-import com.google.common.collect.Sets;
+import java.util.*;
 
 /**
  * @author Lorenz Buehmann
  *
  */
 public class OWLClassExpressionConverter implements OWLClassExpressionVisitorEx<NLGElement>, OWLIndividualVisitorEx<NLGElement>, OWLDataRangeVisitorEx<NLGElement>{
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(OWLClassExpressionConverter.class);
 
 	NLGFactory nlgFactory;
 	Realiser realiser;
-	
+
 	IRIConverter iriConverter = new SimpleIRIConverter();
 	PropertyVerbalizer propertyVerbalizer = new PropertyVerbalizer(iriConverter, null);
 	LiteralConverter literalConverter = new LiteralConverter(iriConverter);
 	OWLDataFactory df = new OWLDataFactoryImpl();
-	
+
+	OptimizerDepParse opt;
+
 	boolean noun;
-	
+
 	NLGElement object;
 	NLGElement complement;
-	
+
 	int modalDepth;
-	
+
 	OWLClassExpression root;
 
 	private boolean isSubClassExpression;
@@ -128,6 +80,7 @@ public class OWLClassExpressionConverter implements OWLClassExpressionVisitorEx<
 	public OWLClassExpressionConverter(Lexicon lexicon) {
 		nlgFactory = new NLGFactory(lexicon);
 		realiser = new Realiser(lexicon);
+		opt = new OptimizerDepParse();
 	}
 	
 	public OWLClassExpressionConverter() {
@@ -137,11 +90,19 @@ public class OWLClassExpressionConverter implements OWLClassExpressionVisitorEx<
 	public String convert(OWLClassExpression ce) {
 		// process
 		NLGElement nlgElement = asNLGElement(ce);
-
+		long start = System.currentTimeMillis();
 		// realise
 		nlgElement = realiser.realise(nlgElement);
-		
-		return nlgElement.getRealisation();
+
+		String out = nlgElement.getRealisation();
+		long end = System.currentTimeMillis();
+		System.out.println("**************************************************");
+		System.out.println("Time consumed in axiom text generation : " + (end - start) / 1000F + " sec");
+		start = System.currentTimeMillis();
+		out = opt.optimize(out);
+		end = System.currentTimeMillis();
+		System.out.println("Time consumed by dependency parser(Optimiser) : " + (end - start) / 1000F + " sec");
+		return out;
 	}
 	
 	public NLGElement asNLGElement(OWLClassExpression ce) {
@@ -219,17 +180,17 @@ public class OWLClassExpressionConverter implements OWLClassExpressionVisitorEx<
 					newCe);
 		} else if(ce instanceof OWLObjectAllValuesFrom){
 			OWLClassExpression newCe = df.getOWLObjectAllValuesFrom(((OWLObjectAllValuesFrom) ce).getProperty(), rewrite(((OWLObjectAllValuesFrom) ce).getFiller()));
-			if(inIntersection){
+			if (inIntersection) {
 				return newCe;
 			}
 			return df.getOWLObjectIntersectionOf(
 					df.getOWLThing(),
 					newCe);
 		}
-		if(inIntersection){
+		if (inIntersection) {
 			return ce;
 		}
-		Set<OWLClassExpression> operands = Sets.<OWLClassExpression>newHashSet(ce, df.getOWLThing());
+		Set<OWLClassExpression> operands = Sets.newHashSet(ce, df.getOWLThing());
 		return df.getOWLObjectIntersectionOf(operands);
 	}
 	
